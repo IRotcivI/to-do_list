@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 class ProjectController extends Controller
@@ -22,7 +24,7 @@ class ProjectController extends Controller
      */
     public function create()
     {
-        //
+        return view('projects.create');
     }
 
     /**
@@ -30,7 +32,19 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'color' => ['required', 'hex_color'],
+        ]);
+
+        $project = $request->user()->ownedProjects()->create($validated);
+
+        $project->members()->attach($request->user(), ['role' => 'owner']);
+
+        return redirect()
+            ->route('projects.show', $project)
+            ->with('success', 'Projet créé avec succès !');
     }
 
     /**
